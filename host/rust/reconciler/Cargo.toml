@@ -1,0 +1,10 @@
+[package]
+name = "reconciler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.94"
+wasi = "0.13.3"
+wasmtime = "27.0.0"
+wasmtime-wasi = "27.0.0"
