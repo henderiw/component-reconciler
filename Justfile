@@ -41,6 +41,9 @@ build-guest-python2:
 # Run   #
 #########
 
-# Run a WebAssembly host (Rust)
+# Run the host
+run: run-host-rust
+
+# Run a Rust host
 run-host-rust:
-    {{just}} -f host/rust/reconciler/Justfile build
+    {{just}} -f host/rust/reconciler/Justfile run

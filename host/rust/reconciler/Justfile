@@ -10,7 +10,7 @@ cargo := env_var_or_default("CARGO", "cargo")
     command -v {{cargo}} || echo "cargo is not installed, please install it (see: https://doc.rust-lang.org/cargo/getting-started/installation.html)"
 
 # Ensure required tooling is installed
-check: _ensure-tool-rust
+check: _ensure-tool-cargo
 
 # Run the host
 run:
