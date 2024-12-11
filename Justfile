@@ -19,7 +19,10 @@ check:
 # Build #
 #########
 
-# Build all guest components
+# Build all
+build: build-guest
+
+# Build guest components
 build-guest: build-guest-rust build-guest-go build-guest-python2
 
 # Build the `guest reconciler` rust WebAssembly component
