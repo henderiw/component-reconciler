@@ -6,6 +6,10 @@ tinygo := env_var_or_default("TINYGO", "tinygo")
 componentize-py := env_var_or_default("COMPONENTIZE_PY", "componentize-py")
 uv := env_var_or_default("UV", "uv")
 
+guest_rust_wasm_path := join(invocation_directory(), "guest/rust/reconciler/target/wasm32-wasip1/release/reconciler.wasm")
+guest_python_wasm_path := join(invocation_directory(), "guest/python/reconciler/reconciler.wasm")
+guest_golang_wasm_path := join(invocation_directory(), "guest/go/reconciler/reconciler.wasm")
+
 @_default:
     {{just}} --list
 
@@ -42,8 +46,19 @@ uv := env_var_or_default("UV", "uv")
 #########
 
 # Run the host
-run: run-host-rust
+run-all: run-host-rust run-host-golang run-host-python
 
-# Run a Rust host
+# Run the host with the rust guest
 run-host-rust:
-    {{just}} -f host/rust/reconciler/Justfile run
+    echo "==> running rust guest component..."
+    GUEST_WASM_PATH={{guest_rust_wasm_path}} {{just}} -f host/rust/reconciler/Justfile run
+
+# Run the host with the golang guest
+run-host-golang:
+    echo "==> running golang guest component..."
+    GUEST_WASM_PATH={{guest_golang_wasm_path}} {{just}} -f host/rust/reconciler/Justfile run
+
+# Run the host with the python guest
+run-host-python:
+    echo "==> running python guest component..."
+    GUEST_WASM_PATH={{guest_python_wasm_path}} {{just}} -f host/rust/reconciler/Justfile run

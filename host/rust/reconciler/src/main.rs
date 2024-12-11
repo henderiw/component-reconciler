@@ -46,10 +46,12 @@ fn reconcile(path: PathBuf, input_json: String) -> Result<String> {
 }
 
 fn main() -> Result<()> {
-    // Path to the `.wasm` file
-    let wasm_path = PathBuf::from("../../../guest/rust/reconciler/target/wasm32-wasip1/release/reconciler.wasm");
-    //let wasm_path = PathBuf::from("../../../guest/python/reconciler/reconciler.wasm");
-    //let wasm_path = PathBuf::from("../../../guest/go/reconciler/reconciler.wasm");
+    let wasm_path = PathBuf::from(std::env::var_os("GUEST_WASM_PATH").context("missing/invalid path to WebAssembly module (env: GUEST_WASM_PATH)")?);
+
+    // // Path to the `.wasm` file
+    // let wasm_path = PathBuf::from("../../../guest/rust/reconciler/target/wasm32-wasip1/release/reconciler.wasm");
+    // let wasm_path = PathBuf::from("../../../guest/python/reconciler/reconciler.wasm");
+    // let wasm_path = PathBuf::from("../../../guest/go/reconciler/reconciler.wasm");
 
     // Input JSON
     let input_json = r#"{"items": ["item1", "item2", "item3"]}"#.to_string();
