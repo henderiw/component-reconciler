@@ -1,50 +1,64 @@
 just := just_executable()
-cargo := "cargo"
-go := "go"
-tinygo := "tinygo"
-componentize-py := "componentize-py"
+
+cargo := env_var_or_default("CARGO", "cargo")
+go := env_var_or_default("GO", "go")
+tinygo := env_var_or_default("TINYGO", "tinygo")
+componentize-py := env_var_or_default("COMPONENTIZE_PY", "componentize-py")
+uv := env_var_or_default("UV", "uv")
+
+guest_rust_wasm_path := join(invocation_directory(), "guest/rust/reconciler/target/wasm32-wasip1/release/reconciler.wasm")
+guest_python_wasm_path := join(invocation_directory(), "guest/python/reconciler/reconciler.wasm")
+guest_golang_wasm_path := join(invocation_directory(), "guest/go/reconciler/reconciler.wasm")
 
 @_default:
     {{just}} --list
 
-# Ensure `rust` tooling is present
-@_ensure-tool-cargo:
-    command -v {{cargo}} || echo "cargo is not installed, please install it (see: https://doc.rust-lang.org/cargo/getting-started/installation.html)"
-
-# Ensure `go` tooling is present
-@_ensure-tool-go:
-    command -v {{go}} || echo "go is not installed, please install it (see: https://go.dev/doc/install)"
-
-@_ensure-tool-tinygo:
-    command -v {{go}} || echo "tinygo is not installed, please install it (see: https://tinygo.org/getting-started/install/)"
-
-@_ensure-tool-componentize-py:
-    command -v {{componentize-py}} || echo "componentize-py is not installed, please install it (see: pip install componentize-py)"
-
-# Check for required tools
-check: _ensure-tool-cargo _ensure-tool-go _ensure-tool-tinygo _ensure-tool-componentize-py
+# Check for required tools by subproject
+@check:
+    {{just}} -f guest/rust/reconciler/Justfile check
+    {{just}} -f guest/go/reconciler/Justfile check
+    {{just}} -f guest/python/reconciler/Justfile check
 
 #########
 # Build #
 #########
 
+# Build all
+@build: build-guest
+
+# Build guest components
+@build-guest: build-guest-rust build-guest-go build-guest-python2
+
 # Build the `guest reconciler` rust WebAssembly component
-build-guest-rust: _ensure-tool-cargo
-    (cd guest/rust/reconciler && {{cargo}} component build --release)
+@build-guest-rust:
+    {{just}} -f guest/rust/reconciler/Justfile build
 
 # Build the `guest reconciler` python WebAssembly component
-build-guest-go: _ensure-tool-go _ensure-tool-tinygo
-    (cd guest/go/reconciler && {{go}} generate)
-    (cd guest/go/reconciler && {{tinygo}} build --target=wasip2 --wit-package ../../../wit --wit-world reconciler -o reconciler.wasm)
+@build-guest-go:
+    {{just}} -f guest/go/reconciler/Justfile build
 
 # Build the `guest reconciler` python WebAssembly component
-build-guest-python2: _ensure-tool-componentize-py
-    (cd guest/python/reconciler && {{componentize-py}} --wit-path ../../../wit --world reconciler bindings .)
-    (cd guest/python/reconciler && {{componentize-py}} --wit-path ../../../wit --world reconciler componentize rec -o reconciler.wasm)
+@build-guest-python2:
+    {{just}} -f guest/python/reconciler/Justfile build
 
 #########
 # Run   #
 #########
 
-run-host-rust: _ensure-tool-cargo
-    (cd host/rust/reconciler && {{cargo}} run)
+# Run the host
+@run-all: run-host-rust run-host-golang run-host-python
+
+# Run the host with the rust guest
+@run-host-rust:
+    echo "==> running rust guest component..."
+    GUEST_WASM_PATH={{guest_rust_wasm_path}} {{just}} -f host/rust/reconciler/Justfile run
+
+# Run the host with the golang guest
+@run-host-golang:
+    echo "==> running golang guest component..."
+    GUEST_WASM_PATH={{guest_golang_wasm_path}} {{just}} -f host/rust/reconciler/Justfile run
+
+# Run the host with the python guest
+@run-host-python:
+    echo "==> running python guest component..."
+    GUEST_WASM_PATH={{guest_python_wasm_path}} {{just}} -f host/rust/reconciler/Justfile run

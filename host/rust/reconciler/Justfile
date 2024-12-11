@@ -1,0 +1,17 @@
+just := just_executable()
+
+cargo := env_var_or_default("CARGO", "cargo")
+
+@_default:
+    {{just}} --list
+
+# Ensure `cargo` tooling is present
+@_ensure-tool-cargo:
+    command -v {{cargo}} || echo "cargo is not installed, please install it (see: https://doc.rust-lang.org/cargo/getting-started/installation.html)"
+
+# Ensure required tooling is installed
+@check: _ensure-tool-cargo
+
+# Run the host
+@run:
+    {{cargo}} run

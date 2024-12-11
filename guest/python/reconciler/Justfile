@@ -1,0 +1,19 @@
+just := just_executable()
+
+@_default:
+    {{just}} --list
+
+@_ensure-tool-uv:
+    command -v uv || echo "uv is not installed, please install it (see: https://docs.astral.sh/uv/)"
+
+# Ensure required tooling is installed
+@check: _ensure-tool-uv
+
+# Build the `guest reconciler` python WebAssembly component
+#
+# NOTE: for some reason uv cannot be templated like normal with just
+@build: _ensure-tool-uv
+    echo "==> building python guest component..."
+    rm -rf reconciler
+    uv tool run componentize-py --wit-path ../../../wit --world reconciler bindings reconciler
+    uv tool run componentize-py --wit-path ../../../wit --world reconciler componentize rec -o reconciler.wasm
