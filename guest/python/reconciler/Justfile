@@ -13,6 +13,6 @@ check: _ensure-tool-uv
 #
 # NOTE: for some reason uv cannot be templated like normal with just
 build: _ensure-tool-uv
-    rm -rf bindings
+    rm -rf reconciler
     uv tool run componentize-py --wit-path ../../../wit --world reconciler bindings reconciler
     uv tool run componentize-py --wit-path ../../../wit --world reconciler componentize rec -o reconciler.wasm
