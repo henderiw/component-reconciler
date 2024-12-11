@@ -1,0 +1,23 @@
+just := just_executable()
+
+go := env_var_or_default("GO", "go")
+tinygo := env_var_or_default("TINYGO", "tinygo")
+
+@_default:
+    {{just}} --list
+
+# Ensure `go` tooling is present
+@_ensure-tool-go:
+    command -v {{go}} || echo "go is not installed, please install it (see: https://go.dev/doc/install)"
+
+# Ensure `tinygo` tooling is present
+@_ensure-tool-tinygo:
+    command -v {{tinygo}} || echo "tinygo is not installed, please install it (see: https://tinygo.org/getting-started/install/)"
+
+# Ensure required tooling is installed
+check: _ensure-tool-go _ensure-tool-tinygo
+
+# Build the `guest reconciler` Golang WebAssembly component
+build: check
+    {{go}} generate
+    {{tinygo}} build --target=wasip2 --wit-package ../../../wit --wit-world reconciler -o reconciler.wasm
