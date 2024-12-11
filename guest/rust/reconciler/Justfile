@@ -10,8 +10,9 @@ cargo := env_var_or_default("CARGO", "cargo")
     command -v {{cargo}} || echo "cargo is not installed, please install it (see: https://doc.rust-lang.org/cargo/getting-started/installation.html)"
 
 # Ensure required tooling is installed
-check: _ensure-tool-cargo
+@check: _ensure-tool-cargo
 
 # Build the `guest reconciler` Rust WebAssembly component
-build: check
+@build: check
+    echo "==> building rust guest component..."
     {{cargo}} component build --release

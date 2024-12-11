@@ -15,9 +15,10 @@ tinygo := env_var_or_default("TINYGO", "tinygo")
     command -v {{tinygo}} || echo "tinygo is not installed, please install it (see: https://tinygo.org/getting-started/install/)"
 
 # Ensure required tooling is installed
-check: _ensure-tool-go _ensure-tool-tinygo
+@check: _ensure-tool-go _ensure-tool-tinygo
 
 # Build the `guest reconciler` Golang WebAssembly component
-build: check
+@build: check
+    echo "==> building golang guest component..."
     {{go}} generate
     {{tinygo}} build --target=wasip2 --wit-package ../../../wit --wit-world reconciler -o reconciler.wasm

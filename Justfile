@@ -10,7 +10,7 @@ uv := env_var_or_default("UV", "uv")
     {{just}} --list
 
 # Check for required tools by subproject
-check:
+@check:
     {{just}} -f guest/rust/reconciler/Justfile check
     {{just}} -f guest/go/reconciler/Justfile check
     {{just}} -f guest/python/reconciler/Justfile check
@@ -20,21 +20,21 @@ check:
 #########
 
 # Build all
-build: build-guest
+@build: build-guest
 
 # Build guest components
-build-guest: build-guest-rust build-guest-go build-guest-python2
+@build-guest: build-guest-rust build-guest-go build-guest-python2
 
 # Build the `guest reconciler` rust WebAssembly component
-build-guest-rust:
+@build-guest-rust:
     {{just}} -f guest/rust/reconciler/Justfile build
 
 # Build the `guest reconciler` python WebAssembly component
-build-guest-go:
+@build-guest-go:
     {{just}} -f guest/go/reconciler/Justfile build
 
 # Build the `guest reconciler` python WebAssembly component
-build-guest-python2:
+@build-guest-python2:
     {{just}} -f guest/python/reconciler/Justfile build
 
 #########
