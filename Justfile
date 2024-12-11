@@ -46,19 +46,19 @@ guest_golang_wasm_path := join(invocation_directory(), "guest/go/reconciler/reco
 #########
 
 # Run the host
-run-all: run-host-rust run-host-golang run-host-python
+@run-all: run-host-rust run-host-golang run-host-python
 
 # Run the host with the rust guest
-run-host-rust:
+@run-host-rust:
     echo "==> running rust guest component..."
     GUEST_WASM_PATH={{guest_rust_wasm_path}} {{just}} -f host/rust/reconciler/Justfile run
 
 # Run the host with the golang guest
-run-host-golang:
+@run-host-golang:
     echo "==> running golang guest component..."
     GUEST_WASM_PATH={{guest_golang_wasm_path}} {{just}} -f host/rust/reconciler/Justfile run
 
 # Run the host with the python guest
-run-host-python:
+@run-host-python:
     echo "==> running python guest component..."
     GUEST_WASM_PATH={{guest_python_wasm_path}} {{just}} -f host/rust/reconciler/Justfile run
