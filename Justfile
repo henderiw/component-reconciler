@@ -27,7 +27,7 @@ guest_golang_wasm_path := join(invocation_directory(), "guest/go/reconciler/reco
 @build: build-guest
 
 # Build guest components
-@build-guest: build-guest-rust build-guest-go build-guest-python2
+@build-guest: build-guest-rust build-guest-go build-guest-python
 
 # Build the `guest reconciler` rust WebAssembly component
 @build-guest-rust:
@@ -38,7 +38,7 @@ guest_golang_wasm_path := join(invocation_directory(), "guest/go/reconciler/reco
     {{just}} -f guest/go/reconciler/Justfile build
 
 # Build the `guest reconciler` python WebAssembly component
-@build-guest-python2:
+@build-guest-python:
     {{just}} -f guest/python/reconciler/Justfile build
 
 #########
