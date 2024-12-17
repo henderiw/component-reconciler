@@ -1,3 +1,38 @@
+#[derive(Clone)]
+pub struct ReconcileResult {
+    pub requeue: bool,
+    pub requeue_after: u32,
+    pub object: _rt::String,
+}
+impl ::core::fmt::Debug for ReconcileResult {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        f.debug_struct("ReconcileResult")
+            .field("requeue", &self.requeue)
+            .field("requeue-after", &self.requeue_after)
+            .field("object", &self.object)
+            .finish()
+    }
+}
+#[derive(Clone)]
+pub struct ReconcileError {
+    pub code: u32,
+    pub message: _rt::String,
+}
+
+impl ::core::fmt::Debug for ReconcileError {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        f.debug_struct("ReconcileError")
+            .field("code", &self.code)
+            .field("message", &self.message)
+            .finish()
+    }
+}
+impl ::core::fmt::Display for ReconcileError {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+impl std::error::Error for ReconcileError {}
 #[doc(hidden)]
 #[allow(non_snake_case)]
 pub unsafe fn _export_reconcile_cabi<T: Guest>(arg0: *mut u8, arg1: usize) -> *mut u8 {
@@ -6,25 +41,61 @@ pub unsafe fn _export_reconcile_cabi<T: Guest>(arg0: *mut u8, arg1: usize) -> *m
     let bytes0 = _rt::Vec::from_raw_parts(arg0.cast(), len0, len0);
     let result1 = T::reconcile(_rt::string_lift(bytes0));
     let ptr2 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
-    let vec3 = (result1.into_bytes()).into_boxed_slice();
-    let ptr3 = vec3.as_ptr().cast::<u8>();
-    let len3 = vec3.len();
-    ::core::mem::forget(vec3);
-    *ptr2.add(4).cast::<usize>() = len3;
-    *ptr2.add(0).cast::<*mut u8>() = ptr3.cast_mut();
+    match result1 {
+        Ok(e) => {
+            *ptr2.add(0).cast::<u8>() = (0i32) as u8;
+            let ReconcileResult {
+                requeue: requeue3,
+                requeue_after: requeue_after3,
+                object: object3,
+            } = e;
+            *ptr2.add(4).cast::<u8>() = (match requeue3 {
+                true => 1,
+                false => 0,
+            }) as u8;
+            *ptr2.add(8).cast::<i32>() = _rt::as_i32(requeue_after3);
+            let vec4 = (object3.into_bytes()).into_boxed_slice();
+            let ptr4 = vec4.as_ptr().cast::<u8>();
+            let len4 = vec4.len();
+            ::core::mem::forget(vec4);
+            *ptr2.add(16).cast::<usize>() = len4;
+            *ptr2.add(12).cast::<*mut u8>() = ptr4.cast_mut();
+        }
+        Err(e) => {
+            *ptr2.add(0).cast::<u8>() = (1i32) as u8;
+            let ReconcileError { code: code5, message: message5 } = e;
+            *ptr2.add(4).cast::<i32>() = _rt::as_i32(code5);
+            let vec6 = (message5.into_bytes()).into_boxed_slice();
+            let ptr6 = vec6.as_ptr().cast::<u8>();
+            let len6 = vec6.len();
+            ::core::mem::forget(vec6);
+            *ptr2.add(12).cast::<usize>() = len6;
+            *ptr2.add(8).cast::<*mut u8>() = ptr6.cast_mut();
+        }
+    };
     ptr2
 }
 #[doc(hidden)]
 #[allow(non_snake_case)]
 pub unsafe fn __post_return_reconcile<T: Guest>(arg0: *mut u8) {
-    let l0 = *arg0.add(0).cast::<*mut u8>();
-    let l1 = *arg0.add(4).cast::<usize>();
-    _rt::cabi_dealloc(l0, l1, 1);
+    let l0 = i32::from(*arg0.add(0).cast::<u8>());
+    match l0 {
+        0 => {
+            let l1 = *arg0.add(12).cast::<*mut u8>();
+            let l2 = *arg0.add(16).cast::<usize>();
+            _rt::cabi_dealloc(l1, l2, 1);
+        }
+        _ => {
+            let l3 = *arg0.add(8).cast::<*mut u8>();
+            let l4 = *arg0.add(12).cast::<usize>();
+            _rt::cabi_dealloc(l3, l4, 1);
+        }
+    }
 }
 pub trait Guest {
     /// The `reconcile` function is the main entry point for the reconciler.
     /// It takes a JSON input and returns a JSON output or an error.
-    fn reconcile(object: _rt::String) -> _rt::String;
+    fn reconcile(object: _rt::String) -> Result<ReconcileResult, ReconcileError>;
 }
 #[doc(hidden)]
 macro_rules! __export_world_reconciler_cabi {
@@ -39,8 +110,8 @@ macro_rules! __export_world_reconciler_cabi {
 #[doc(hidden)]
 pub(crate) use __export_world_reconciler_cabi;
 #[repr(align(4))]
-struct _RetArea([::core::mem::MaybeUninit<u8>; 8]);
-static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 8]);
+struct _RetArea([::core::mem::MaybeUninit<u8>; 20]);
+static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 20]);
 #[allow(dead_code)]
 pub mod wasi {
     #[allow(dead_code)]
@@ -1374,6 +1445,65 @@ mod _rt {
     pub fn run_ctors_once() {
         wit_bindgen_rt::run_ctors_once();
     }
+    pub fn as_i32<T: AsI32>(t: T) -> i32 {
+        t.as_i32()
+    }
+    pub trait AsI32 {
+        fn as_i32(self) -> i32;
+    }
+    impl<'a, T: Copy + AsI32> AsI32 for &'a T {
+        fn as_i32(self) -> i32 {
+            (*self).as_i32()
+        }
+    }
+    impl AsI32 for i32 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for u32 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for i16 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for u16 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for i8 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for u8 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for char {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for usize {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
     pub unsafe fn cabi_dealloc(ptr: *mut u8, size: usize, align: usize) {
         if size == 0 {
             return;
@@ -1415,23 +1545,25 @@ pub(crate) use __export_reconciler_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.35.0:example:reconciler@0.1.0:reconciler:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1531] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xfa\x0a\x01A\x02\x01\
-A\x0f\x01B\x04\x04\0\x05error\x03\x01\x01h\0\x01@\x01\x04self\x01\0s\x04\0\x1d[m\
-ethod]error.to-debug-string\x01\x02\x03\0\x13wasi:io/error@0.2.0\x05\0\x01B\x0a\x04\
-\0\x08pollable\x03\x01\x01h\0\x01@\x01\x04self\x01\0\x7f\x04\0\x16[method]pollab\
-le.ready\x01\x02\x01@\x01\x04self\x01\x01\0\x04\0\x16[method]pollable.block\x01\x03\
-\x01p\x01\x01py\x01@\x01\x02in\x04\0\x05\x04\0\x04poll\x01\x06\x03\0\x12wasi:io/\
-poll@0.2.0\x05\x01\x02\x03\0\0\x05error\x02\x03\0\x01\x08pollable\x01B(\x02\x03\x02\
-\x01\x02\x04\0\x05error\x03\0\0\x02\x03\x02\x01\x03\x04\0\x08pollable\x03\0\x02\x01\
-i\x01\x01q\x02\x15last-operation-failed\x01\x04\0\x06closed\0\0\x04\0\x0cstream-\
-error\x03\0\x05\x04\0\x0cinput-stream\x03\x01\x04\0\x0doutput-stream\x03\x01\x01\
-h\x07\x01p}\x01j\x01\x0a\x01\x06\x01@\x02\x04self\x09\x03lenw\0\x0b\x04\0\x19[me\
-thod]input-stream.read\x01\x0c\x04\0\"[method]input-stream.blocking-read\x01\x0c\
-\x01j\x01w\x01\x06\x01@\x02\x04self\x09\x03lenw\0\x0d\x04\0\x19[method]input-str\
-eam.skip\x01\x0e\x04\0\"[method]input-stream.blocking-skip\x01\x0e\x01i\x03\x01@\
-\x01\x04self\x09\0\x0f\x04\0\x1e[method]input-stream.subscribe\x01\x10\x01h\x08\x01\
-@\x01\x04self\x11\0\x0d\x04\0![method]output-stream.check-write\x01\x12\x01j\0\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1633] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xe0\x0b\x01A\x02\x01\
+A\x14\x01r\x03\x07requeue\x7f\x0drequeue-aftery\x06objects\x03\0\x10reconcile-re\
+sult\x03\0\0\x01r\x02\x04codey\x07messages\x03\0\x0freconcile-error\x03\0\x02\x01\
+B\x04\x04\0\x05error\x03\x01\x01h\0\x01@\x01\x04self\x01\0s\x04\0\x1d[method]err\
+or.to-debug-string\x01\x02\x03\0\x13wasi:io/error@0.2.0\x05\x04\x01B\x0a\x04\0\x08\
+pollable\x03\x01\x01h\0\x01@\x01\x04self\x01\0\x7f\x04\0\x16[method]pollable.rea\
+dy\x01\x02\x01@\x01\x04self\x01\x01\0\x04\0\x16[method]pollable.block\x01\x03\x01\
+p\x01\x01py\x01@\x01\x02in\x04\0\x05\x04\0\x04poll\x01\x06\x03\0\x12wasi:io/poll\
+@0.2.0\x05\x05\x02\x03\0\0\x05error\x02\x03\0\x01\x08pollable\x01B(\x02\x03\x02\x01\
+\x06\x04\0\x05error\x03\0\0\x02\x03\x02\x01\x07\x04\0\x08pollable\x03\0\x02\x01i\
+\x01\x01q\x02\x15last-operation-failed\x01\x04\0\x06closed\0\0\x04\0\x0cstream-e\
+rror\x03\0\x05\x04\0\x0cinput-stream\x03\x01\x04\0\x0doutput-stream\x03\x01\x01h\
+\x07\x01p}\x01j\x01\x0a\x01\x06\x01@\x02\x04self\x09\x03lenw\0\x0b\x04\0\x19[met\
+hod]input-stream.read\x01\x0c\x04\0\"[method]input-stream.blocking-read\x01\x0c\x01\
+j\x01w\x01\x06\x01@\x02\x04self\x09\x03lenw\0\x0d\x04\0\x19[method]input-stream.\
+skip\x01\x0e\x04\0\"[method]input-stream.blocking-skip\x01\x0e\x01i\x03\x01@\x01\
+\x04self\x09\0\x0f\x04\0\x1e[method]input-stream.subscribe\x01\x10\x01h\x08\x01@\
+\x01\x04self\x11\0\x0d\x04\0![method]output-stream.check-write\x01\x12\x01j\0\x01\
 \x06\x01@\x02\x04self\x11\x08contents\x0a\0\x13\x04\0\x1b[method]output-stream.w\
 rite\x01\x14\x04\0.[method]output-stream.blocking-write-and-flush\x01\x14\x01@\x01\
 \x04self\x11\0\x13\x04\0\x1b[method]output-stream.flush\x01\x15\x04\0$[method]ou\
@@ -1440,14 +1572,14 @@ utput-stream.subscribe\x01\x16\x01@\x02\x04self\x11\x03lenw\0\x13\x04\0\"[method
 ]output-stream.write-zeroes\x01\x17\x04\05[method]output-stream.blocking-write-z\
 eroes-and-flush\x01\x17\x01@\x03\x04self\x11\x03src\x09\x03lenw\0\x0d\x04\0\x1c[\
 method]output-stream.splice\x01\x18\x04\0%[method]output-stream.blocking-splice\x01\
-\x18\x03\0\x15wasi:io/streams@0.2.0\x05\x04\x02\x03\0\x02\x0doutput-stream\x01B\x05\
-\x02\x03\x02\x01\x05\x04\0\x0doutput-stream\x03\0\0\x01i\x01\x01@\0\0\x02\x04\0\x0a\
-get-stdout\x01\x03\x03\0\x15wasi:cli/stdout@0.2.0\x05\x06\x01B\x05\x01p}\x01@\x01\
+\x18\x03\0\x15wasi:io/streams@0.2.0\x05\x08\x02\x03\0\x02\x0doutput-stream\x01B\x05\
+\x02\x03\x02\x01\x09\x04\0\x0doutput-stream\x03\0\0\x01i\x01\x01@\0\0\x02\x04\0\x0a\
+get-stdout\x01\x03\x03\0\x15wasi:cli/stdout@0.2.0\x05\x0a\x01B\x05\x01p}\x01@\x01\
 \x03lenw\0\0\x04\0\x10get-random-bytes\x01\x01\x01@\0\0w\x04\0\x0eget-random-u64\
-\x01\x02\x03\0\x18wasi:random/random@0.2.0\x05\x07\x01@\x01\x06objects\0s\x04\0\x09\
-reconcile\x01\x08\x04\0#example:reconciler/reconciler@0.1.0\x04\0\x0b\x10\x01\0\x0a\
-reconciler\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070\
-.220.0\x10wit-bindgen-rust\x060.35.0";
+\x01\x02\x03\0\x18wasi:random/random@0.2.0\x05\x0b\x01j\x01\x01\x01\x03\x01@\x01\
+\x06objects\0\x0c\x04\0\x09reconcile\x01\x0d\x04\0#example:reconciler/reconciler\
+@0.1.0\x04\0\x0b\x10\x01\0\x0areconciler\x03\0\0\0G\x09producers\x01\x0cprocesse\
+d-by\x02\x0dwit-component\x070.220.0\x10wit-bindgen-rust\x060.35.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

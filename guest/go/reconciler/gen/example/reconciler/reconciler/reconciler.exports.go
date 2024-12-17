@@ -2,6 +2,10 @@
 
 package reconciler
 
+import (
+	"go.bytecodealliance.org/cm"
+)
+
 // Exports represents the caller-defined exports from "example:reconciler/reconciler@0.1.0".
 var Exports struct {
 	// Reconcile represents the caller-defined, exported function "reconcile".
@@ -9,6 +13,6 @@ var Exports struct {
 	// The `reconcile` function is the main entry point for the reconciler.
 	// It takes a JSON input and returns a JSON output or an error.
 	//
-	//	reconcile: func(object: string) -> string
-	Reconcile func(object string) (result string)
+	//	reconcile: func(object: string) -> result<reconcile-result, reconcile-error>
+	Reconcile func(object string) (result cm.Result[ReconcileResultShape, ReconcileResult, ReconcileError])
 }

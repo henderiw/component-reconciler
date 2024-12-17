@@ -4,7 +4,18 @@ package example:reconciler@0.1.0;
 world reconciler {
     import wasi:cli/stdout@0.2.0;
     import wasi:random/random@0.2.0;
+
+    record reconcile-result {
+        requeue: bool,
+        requeue-after: u32,
+        object: string,
+    }
+
+    record reconcile-error {
+        code: u32,
+        message: string,
+    }
     /// The `reconcile` function is the main entry point for the reconciler.
     /// It takes a JSON input and returns a JSON output or an error.
-    export reconcile: func(object: string) -> string;
+    export reconcile: func(object: string) -> result<reconcile-result, reconcile-error>;
 }
