@@ -5,7 +5,8 @@ class Reconciler(reconciler.Reconciler):
     # Example values for the result
     requeue = False  # Whether to requeue
     requeue_after = 30  # Requeue after 30 seconds
-    response_object = f"Processed: {object}"  # Return a string with processed information
+    #response_object = f"Processed: {object}"  # Return a string with processed information
+    response_object="{'first': 'wim', 'last': 'henderickx}"
     
     # Return the result with appropriate values
     return reconciler.ReconcileResult(
