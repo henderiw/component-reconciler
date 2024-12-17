@@ -18,7 +18,6 @@ pub struct ReconcileError {
     pub code: u32,
     pub message: _rt::String,
 }
-
 impl ::core::fmt::Debug for ReconcileError {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         f.debug_struct("ReconcileError")
