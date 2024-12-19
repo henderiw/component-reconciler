@@ -4,3 +4,33 @@
 //
 // Represents the reconciler world
 package reconciler
+
+import (
+	"go.bytecodealliance.org/cm"
+)
+
+// ReconcileResult represents the record "example:reconciler/reconciler@0.1.0#reconcile-result".
+//
+//	record reconcile-result {
+//		requeue: bool,
+//		requeue-after: u32,
+//		object: string,
+//	}
+type ReconcileResult struct {
+	_            cm.HostLayout
+	Requeue      bool
+	RequeueAfter uint32
+	Object       string
+}
+
+// ReconcileError represents the record "example:reconciler/reconciler@0.1.0#reconcile-error".
+//
+//	record reconcile-error {
+//		code: u32,
+//		message: string,
+//	}
+type ReconcileError struct {
+	_       cm.HostLayout
+	Code    uint32
+	Message string
+}

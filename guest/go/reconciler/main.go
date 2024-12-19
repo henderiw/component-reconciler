@@ -3,13 +3,33 @@ package main
 
 import (
 	"github.com/henderiw/reconciler/gen/example/reconciler/reconciler"
+	"go.bytecodealliance.org/cm"
 )
 
 func init() {
-	reconciler.Exports.Reconcile = func(object string) (result string) {
-		return "{'first': 'wim', 'last': 'henderickx}"
-		//type MyResult = cm.Result[string, string, string]
-		//return cm.OK[MyResult]("{'first': 'wim', 'last': 'henderickx}")
+	reconciler.Exports.Reconcile = func(object string) cm.Result[reconciler.ReconcileResultShape, reconciler.ReconcileResult, reconciler.ReconcileError] {
+		// Example: Check if input is empty
+		if object == "" {
+			reconcileError := reconciler.ReconcileError{
+				Code:    400,
+				Message: "Input cannot be empty",
+			}
+
+			// Return an error result using cm.Err
+			return cm.Err[cm.Result[reconciler.ReconcileResultShape, reconciler.ReconcileResult, reconciler.ReconcileError]](reconcileError)
+		}
+
+		// Parse input (if needed) - skipping for simplicity
+
+		// Construct a success result
+		reconcileSuccess := reconciler.ReconcileResult{
+			Requeue:      false,
+			RequeueAfter: 0,
+			Object:       "{'first': 'wim', 'last': 'henderickx}",
+		}
+
+		// Return the success result using cm.OK
+		return cm.OK[cm.Result[reconciler.ReconcileResultShape, reconciler.ReconcileResult, reconciler.ReconcileError]](reconcileSuccess)
 	}
 }
 
