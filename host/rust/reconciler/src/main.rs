@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use wasmtime::component::{bindgen, Component, Linker};
 use wasmtime::{Engine, Store};
 use wasmtime_wasi::{ResourceTable, WasiCtx, WasiView};
+use std::time::Instant;
 
 bindgen!({
     path: "../../../wit",
@@ -75,18 +76,18 @@ fn load_reconciler_instance(
 
 // call the reconcile function
 fn call_reconcile(
-    mut store: Store<HostState>,
+    store: &mut Store<HostState>,
     instance: &Reconciler,
     input_json: String,
 ) -> std::result::Result<ReconcileResult, ReconcileError> {
     // Call the reconcile function
     let result = instance
-        .call_reconcile(&mut store, &input_json)
+        .call_reconcile(store, &input_json)
         .map_err(|e| ReconcileError {
             code: 500,
             message: format!("Failed to call reconcile: {}", e),
         })??;
-        
+
     Ok(result)
 }
 
@@ -98,21 +99,35 @@ fn main() -> Result<()> {
     );
 
     // Input JSON
-    let input_json = r#"{"items": ["item1", "item2", "item3"]}"#.to_string();
+    let input_json = r#"{"apiVersion":"topo.kubenet.dev/v1alpha1","kind":"Topology","metadata":{"name":"kubenet","namespace":"default"},"spec":{"defaults":{"type":"7220ixr-d3l","provider":"srlinux.nokia.com","version":"24.7.2"},"nodes":[{"name":"node1"},{"name":"node2"}],"links":[{"endpoints":[{"node":"node1","port":1,"endpoint":1},{"node":"node2","port":1,"endpoint":1}]}]}}"#.to_string();
 
     //load the instance
-    let (store, instance) = load_reconciler_instance(wasm_path)
+    let (mut store, instance) = load_reconciler_instance(wasm_path)
         .map_err(|e| anyhow::anyhow!("Error loading reconciler instance: {}", e))?;
 
-    // Call the reconcile function
-    match call_reconcile(store, &instance, input_json) {
-        Ok(result) => {
-            println!("Reconcile succeeded with output: {:#?}", result);
-        }
-        Err(e) => {
-            eprintln!("Reconcile failed: {}", e);
+   // Measure time taken to run the instance 10 times
+    let start = Instant::now();
+
+    for i in 0..10 {
+        println!("Running iteration: {}", i + 1);
+         // Measure iteration time
+        let iteration_start = Instant::now();
+        match call_reconcile(&mut store, &instance, input_json.clone()) {
+            Ok(result) => {
+                let iteration_duration = iteration_start.elapsed();
+                println!("Reconcile Iteration {} succeeded with output: {:#?}", i, result);
+                println!("Reconcile Iteration {} elaspetime {:?}", i, iteration_duration);
+            }
+            Err(e) => {
+                let iteration_duration = iteration_start.elapsed();
+                eprintln!("Reconcile Iteration {} failed: {}", i, e);
+                println!("Reconcile Iteration {} elaspetime {:?}", i, iteration_duration);
+            }
         }
     }
+
+    let duration = start.elapsed();
+    println!("Time taken for 10 iterations: {:?}", duration);
 
     Ok(())
 }
