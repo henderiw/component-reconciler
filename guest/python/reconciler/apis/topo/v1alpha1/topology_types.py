@@ -6,13 +6,6 @@ from apis.infra.v1alpha1.node_types import NodeSpec, Node
 from apis.infra.v1alpha1.link_types import Link, LinkSpec
 from apis.infra.v1alpha1.physical import AdminState
 
-#Joins a list of items with a delimiter, filtering out any None values
-def join(delimiter, items):
-  """
-  Joins a list of items with a delimiter, filtering out None or empty values.
-  """
-  return delimiter.join([item for item in items if item])
-
 class TopologyNode(BaseModel):
     name: Optional[str] = Field(
         None,

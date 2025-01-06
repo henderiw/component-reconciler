@@ -1,8 +1,15 @@
 module github.com/henderiw/reconciler
 
-go 1.22.2
+go 1.23.3
 
-require go.bytecodealliance.org v0.4.1
+toolchain go1.23.4
+
+replace github.com/henderiw/godantic_api_example => /Users/henderiw/code/kform/kform-dev/godantic_api_example
+
+require (
+	github.com/henderiw/godantic_api_example v0.0.0-00010101000000-000000000000
+	go.bytecodealliance.org v0.4.1
+)
 
 require (
 	github.com/coreos/go-semver v0.3.1 // indirect

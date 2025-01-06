@@ -6,7 +6,7 @@ tinygo := env_var_or_default("TINYGO", "tinygo")
 componentize-py := env_var_or_default("COMPONENTIZE_PY", "componentize-py")
 uv := env_var_or_default("UV", "uv")
 
-guest_rust_wasm_path := join(invocation_directory(), "guest/rust/reconciler/target/wasm32-wasip1/release/reconciler.wasm")
+guest_rust_wasm_path := join(invocation_directory(), "guest/rust/reconciler/target/wasm32-wasip1/release/guest_reconciler.wasm")
 guest_python_wasm_path := join(invocation_directory(), "guest/python/reconciler/reconciler.wasm")
 guest_golang_wasm_path := join(invocation_directory(), "guest/go/reconciler/reconciler.wasm")
 

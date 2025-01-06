@@ -2,8 +2,15 @@ package example:reconciler@0.1.0;
 
 /// Represents the reconciler world
 world reconciler {
-    import wasi:cli/stdout@0.2.0;
-    import wasi:random/random@0.2.0;
+    //import wasi:cli/stdout@0.2.0;
+    //import wasi:random/random@0.2.0;
+    //import wasi:cli/environment@0.2.0;
+    //import wasi:cli/stderr@0.2.0;
+    //import wasi:cli/stdin@0.2.0;
+    //import wasi:clocks/monotonic-clock@0.2.0;
+    //import wasi:clocks/wall-clock@0.2.0;
+    //import wasi:filesystem/types@0.2.0;
+    //import wasi:filesystem/preopens@0.2.0;
 
     record reconcile-result {
         requeue: bool,
@@ -18,4 +25,6 @@ world reconciler {
     /// The `reconcile` function is the main entry point for the reconciler.
     /// It takes a JSON input and returns a JSON output or an error.
     export reconcile: func(object: string) -> result<reconcile-result, reconcile-error>;
+
+    import get: func(name: string) -> string;
 }

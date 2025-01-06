@@ -1,27 +1,46 @@
+from pydantic import ValidationError
+import json 
 import reconciler
-#from pydantic import ValidationError
-from apis.topo.v1alpha1.topology_types import Topology 
+from topology_types import Topology
+from  user import User
 
 class Reconciler(reconciler.Reconciler):
   def reconcile(self, object: str) -> reconciler.ReconcileResult:
     # Example values for the result
     requeue = False  # Whether to requeue
-    requeue_after = 30  # Requeue after 30 seconds
-    #response_object = f"Processed: {object}"  # Return a string with processed information
+    requeue_after = 30  # Requeue after 30 seconds  
 
-    #try:
-    topo = Topology.model_validate(object)
-    result = topo.reconcile()
-    #except ValidationError as e:
-    #  return reconciler.ReconcileError(
-    #    code=1,
-    #    error=str(e)
-    #  )
+    try:
+      # Parse the JSON string into a dictionary
+      topo_data = json.loads(object)
+      
+      # Pass the parsed data to the Topology model
+      topo = Topology(**topo_data)
+      #print(topo_data)
+      nodes = topo.construct_nodes()
+      links = topo.construct_links()
+
+    except json.JSONDecodeError as e:
+      # Handle JSON parsing errors
+      raise reconciler.types.Err(reconciler.ReconcileError(
+          code=1,
+          message=f"Invalid JSON: {str(e)}"
+      ))
+    except ValidationError as e:
+      raise reconciler.types.Err(reconciler.ReconcileError(
+          code=2,
+          message=f"valiation error: {str(e)}"
+      ))
+    except Exception as e:
+      # Handle other errors, such as validation errors
+      raise reconciler.types.Err(reconciler.ReconcileError(
+          code=0,
+          message=str(e)
+      ))
     
     # Return the result with appropriate values
     return reconciler.ReconcileResult(
         requeue=requeue,
         requeue_after=requeue_after,
-        object=result
+        object=f"Constructed: {links}"
     )
-

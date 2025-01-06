@@ -8,6 +8,10 @@ import (
 
 // This file contains wasmimport and wasmexport declarations for "example:reconciler@0.1.0".
 
+//go:wasmimport $root get
+//go:noescape
+func wasmimport_Get(name0 *uint8, name1 uint32, result *string)
+
 //go:wasmexport reconcile
 //export reconcile
 func wasmexport_Reconcile(object0 *uint8, object1 uint32) (result *cm.Result[ReconcileResultShape, ReconcileResult, ReconcileError]) {

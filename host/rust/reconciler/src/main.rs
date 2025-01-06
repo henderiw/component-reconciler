@@ -1,19 +1,25 @@
+use core::fmt::{self, Debug};
 use std::path::PathBuf;
-
 use anyhow::{Context, Result};
-use wasmtime::component::{bindgen, Component, Linker};
-use wasmtime::{Engine, Store};
-use wasmtime_wasi::{ResourceTable, WasiCtx, WasiView};
+use wasmtime::component::{Component, Linker};
+use wasmtime::{Config, Engine, Store};
+use wasmtime_wasi::{WasiCtx, WasiView, ResourceTable};
 use std::time::Instant;
+//use reconciler;
 
-bindgen!({
-    path: "../../../wit",
+
+
+
+wasmtime::component::bindgen!({
+    path: "../../../wit", 
     world: "reconciler",
-    async: false
+    async: false,
+    //with: {
+    //    "wasi": wasmtime_wasi::bindings,
+    //},
 });
 
-// Import the guest's bindings
-//use guest_reconciler::bindings::{ReconcileResult, ReconcileError};
+
 
 /// This state is used by the Runtime host,
 /// we use it to store the WASI context (implementations of WASI)
@@ -22,50 +28,90 @@ bindgen!({
 /// see:
 /// - https://docs.rs/wasmtime-wasi/latest/wasmtime_wasi/trait.WasiView.html
 /// - https://docs.rs/wasmtime-wasi/latest/wasmtime_wasi/fn.add_to_linker_sync.html
-struct HostState {
-    ctx: WasiCtx,
+struct Ctx {
+    wasi: WasiCtx,
     table: ResourceTable,
 }
 
-impl HostState {
+impl Ctx {
     pub fn new() -> Self {
+        let wasi = WasiCtx::builder()
+            .inherit_stdio()
+            .build();
         Self {
-            ctx: WasiCtx::builder().build(),
-            table: ResourceTable::default(),
+            wasi,
+            table: ResourceTable::new(),
         }
     }
 }
 
-/// This trait enables any T to provide a WASI context and
-/// resource table, which enables usage by the Store
-impl WasiView for HostState {
-    fn ctx(&mut self) -> &mut WasiCtx {
-        &mut self.ctx
-    }
+//impl ReconcilerImports for Ctx {
+//    fn get(&mut self, name: String) -> String {
+//         println!("Host received name: {}", name);
+//         format!("Hello, {}!", name)
+//     }
+//}
+
+impl ReconcilerImports for Ctx {
+    fn get(&mut self, name: String) -> String {
+         println!("Host received name: {}", name);
+         format!("Hello, {}!", name)
+     }
+}
+
+impl WasiView for Ctx {
     fn table(&mut self) -> &mut ResourceTable {
         &mut self.table
     }
+
+    fn ctx(&mut self) -> &mut WasiCtx {
+        &mut self.wasi
+    }
 }
+
+impl Debug for Ctx {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Ctx").field("runtime", &"wasmtime").finish()
+    }
+}
+
 
 /// load the WASM component and return the instance
 fn load_reconciler_instance(
     path: PathBuf,
-) -> Result<(Store<HostState>, Reconciler)> {
+) -> Result<(Store<Ctx>, Reconciler)> {
     // Initialize the Wasmtime engine
-    let engine = Engine::default();
+    let mut engine_config = Config::default();
+    //engine_config.async_support( true);
+    engine_config.wasm_component_model( true);
+
+    let engine = Engine::new(&engine_config)
+        .context("cannot create engine from config")?;
 
     // Load the WASM component
-    let component = Component::from_file(&engine, &path).context("Component file not found")?;
+    let component = Component::from_file(&engine, &path)
+        .context("Component file not found")?;
 
     // Create the store to manage the state of the component
-    let states = HostState::new();
-    let mut store = Store::<HostState>::new(&engine, states);
+    let states: Ctx = Ctx::new();
+    let mut store = Store::<Ctx>::new(&engine, states);
 
     // Set up the linker for linking interfaces
     let mut linker = Linker::new(&engine);
 
     // Add WASI implementations to the linker for components to use
-    wasmtime_wasi::add_to_linker_sync(&mut linker)?;
+    wasmtime_wasi::add_to_linker_sync(&mut linker)
+        .context("failed to link core WASI interfaces")?;   
+
+    //wasmtime_wasi::bindings::io::error::add_to_linker(&mut linker, |ctx| ctx)
+    //    .context("failed to link wasi")?;
+
+    //wasmtime_wasi::bindings::io::poll::add_to_linker(&mut linker, |ctx| ctx)
+    //    .context("failed to link wasi")?;
+
+    // Add the `Reconciler` interface to the linker
+    Reconciler::add_to_linker(&mut linker, |ctx| ctx)
+        .context("failed to link reconciler")?;
 
     // Instantiate the component
     let instance = Reconciler::instantiate(&mut store, &component, &linker)
@@ -76,7 +122,7 @@ fn load_reconciler_instance(
 
 // call the reconcile function
 fn call_reconcile(
-    store: &mut Store<HostState>,
+    store: &mut Store<Ctx>,
     instance: &Reconciler,
     input_json: String,
 ) -> std::result::Result<ReconcileResult, ReconcileError> {
@@ -99,7 +145,8 @@ fn main() -> Result<()> {
     );
 
     // Input JSON
-    let input_json = r#"{"apiVersion":"topo.kubenet.dev/v1alpha1","kind":"Topology","metadata":{"name":"kubenet","namespace":"default"},"spec":{"defaults":{"type":"7220ixr-d3l","provider":"srlinux.nokia.com","version":"24.7.2"},"nodes":[{"name":"node1"},{"name":"node2"}],"links":[{"endpoints":[{"node":"node1","port":1,"endpoint":1},{"node":"node2","port":1,"endpoint":1}]}]}}"#.to_string();
+    //let input_json = r#"{"apiVersion":"topo.kubenet.dev/v1alpha1","kind":"Topology","metadata":{"name":"kubenet","namespace":"default"},"spec":{"defaults":{"type":"7220ixr-d3l","provider":"srlinux.nokia.com","version":"24.7.2"},"nodes":[{"name":"node1"},{"name":"node2"}],"links":[{"endpoints":[{"node":"node1","port":1,"endpoint":1},{"node":"node2","port":1,"endpoint":1}]}]}}"#.to_string();
+    let input_json = r#"{"apiVersion":"topo.kubenet.dev/v1alpha1","kind":"Topology","metadata":{"name":"kubenet","namespace":"default"},"spec":{"defaults":{"type":"7220ixr-d3l","provider":"srlinux.nokia.com","version":"24.7.2"},"nodes":[{"name":"node1"},{"name":"node3"}],"links":[{"endpoints":[{"node":"node1","port":1,"endpoint":1},{"node":"node2","port":1,"endpoint":1}]}]}}"#.to_string();
 
     //load the instance
     let (mut store, instance) = load_reconciler_instance(wasm_path)

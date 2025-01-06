@@ -34,3 +34,14 @@ type ReconcileError struct {
 	Code    uint32
 	Message string
 }
+
+// Get represents the imported function "get".
+//
+//	get: func(name: string) -> string
+//
+//go:nosplit
+func Get(name string) (result string) {
+	name0, name1 := cm.LowerString(name)
+	wasmimport_Get((*uint8)(name0), (uint32)(name1), &result)
+	return
+}
