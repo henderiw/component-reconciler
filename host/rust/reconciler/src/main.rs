@@ -5,17 +5,15 @@ use wasmtime::component::{Component, Linker};
 use wasmtime::{Config, Engine, Store};
 use wasmtime_wasi::{WasiCtx, WasiView, ResourceTable};
 use std::time::Instant;
-//use reconciler;
-
-
 
 
 wasmtime::component::bindgen!({
     path: "../../../wit", 
     world: "reconciler",
-    async: false,
+    async: true,
     //with: {
-    //    "wasi": wasmtime_wasi::bindings,
+    //    "wasi:cli": wasmtime_wasi::bindings::cli,
+    //    "wasi:io": wasmtime_wasi::bindings::io,
     //},
 });
 
@@ -45,19 +43,14 @@ impl Ctx {
     }
 }
 
-//impl ReconcilerImports for Ctx {
-//    fn get(&mut self, name: String) -> String {
-//         println!("Host received name: {}", name);
-//         format!("Hello, {}!", name)
-//     }
-//}
 
 impl ReconcilerImports for Ctx {
-    fn get(&mut self, name: String) -> String {
+    async fn get(&mut self, name: String) -> String {
          println!("Host received name: {}", name);
          format!("Hello, {}!", name)
      }
 }
+
 
 impl WasiView for Ctx {
     fn table(&mut self) -> &mut ResourceTable {
@@ -77,12 +70,12 @@ impl Debug for Ctx {
 
 
 /// load the WASM component and return the instance
-fn load_reconciler_instance(
+async fn load_reconciler_instance(
     path: PathBuf,
 ) -> Result<(Store<Ctx>, Reconciler)> {
     // Initialize the Wasmtime engine
     let mut engine_config = Config::default();
-    //engine_config.async_support( true);
+    engine_config.async_support( true);
     engine_config.wasm_component_model( true);
 
     let engine = Engine::new(&engine_config)
@@ -100,7 +93,7 @@ fn load_reconciler_instance(
     let mut linker = Linker::new(&engine);
 
     // Add WASI implementations to the linker for components to use
-    wasmtime_wasi::add_to_linker_sync(&mut linker)
+    wasmtime_wasi::add_to_linker_async(&mut linker)
         .context("failed to link core WASI interfaces")?;   
 
     //wasmtime_wasi::bindings::io::error::add_to_linker(&mut linker, |ctx| ctx)
@@ -114,14 +107,15 @@ fn load_reconciler_instance(
         .context("failed to link reconciler")?;
 
     // Instantiate the component
-    let instance = Reconciler::instantiate(&mut store, &component, &linker)
+    let instance = Reconciler::instantiate_async(&mut store, &component, &linker)
+        .await
         .context("Failed to instantiate the reconciler world")?;
 
     Ok((store, instance))
 }
 
 // call the reconcile function
-fn call_reconcile(
+async fn call_reconcile(
     store: &mut Store<Ctx>,
     instance: &Reconciler,
     input_json: String,
@@ -129,6 +123,7 @@ fn call_reconcile(
     // Call the reconcile function
     let result = instance
         .call_reconcile(store, &input_json)
+        .await
         .map_err(|e| ReconcileError {
             code: 500,
             message: format!("Failed to call reconcile: {}", e),
@@ -138,7 +133,8 @@ fn call_reconcile(
 }
 
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let wasm_path = PathBuf::from(
         std::env::var_os("GUEST_WASM_PATH")
             .context("missing/invalid path to WebAssembly module (env: GUEST_WASM_PATH)")?,
@@ -150,6 +146,7 @@ fn main() -> Result<()> {
 
     //load the instance
     let (mut store, instance) = load_reconciler_instance(wasm_path)
+        .await
         .map_err(|e| anyhow::anyhow!("Error loading reconciler instance: {}", e))?;
 
    // Measure time taken to run the instance 10 times
@@ -159,7 +156,7 @@ fn main() -> Result<()> {
         println!("Running iteration: {}", i + 1);
          // Measure iteration time
         let iteration_start = Instant::now();
-        match call_reconcile(&mut store, &instance, input_json.clone()) {
+        match call_reconcile(&mut store, &instance, input_json.clone()).await {
             Ok(result) => {
                 let iteration_duration = iteration_start.elapsed();
                 println!("Reconcile Iteration {} succeeded with output: {:#?}", i, result);
