@@ -169,8 +169,8 @@ cargo run
 
 host RUST:
 - rust guest: ok
-- python guest: hangs and never returns
-- go guest: error cannot instantiate
+- python guest: takes looooong
+- go guest: ok
 
 python componentize.py
 - very big file

@@ -10,7 +10,7 @@ import (
 
 //go:wasmexport reconcile
 //export reconcile
-func wasmexport_Reconcile(object0 *uint8, object1 uint32) (result *string) {
+func wasmexport_Reconcile(object0 *uint8, object1 uint32) (result *cm.Result[ReconcileResultShape, ReconcileResult, ReconcileError]) {
 	object := cm.LiftString[string]((*uint8)(object0), (uint32)(object1))
 	result_ := Exports.Reconcile(object)
 	result = &result_
