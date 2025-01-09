@@ -7,6 +7,7 @@ import (
 
 	topov1alpha1 "github.com/henderiw/godantic_api_example/apis/topo/v1alpha1"
 	"github.com/henderiw/reconciler/gen/example/reconciler/reconciler"
+	"github.com/henderiw/reconciler/gen/example/reconciler/retrieve"
 	"go.bytecodealliance.org/cm"
 )
 
@@ -43,7 +44,7 @@ func init() {
 		topo.ObjectMeta.Name = "wim"
 		fmt.Println("topo object", topo)
 
-		get_response := reconciler.Get("Wim")
+		get_response := retrieve.Get("Wim")
 		fmt.Println("get_response", get_response)
 
 		b, err := json.Marshal(topo)

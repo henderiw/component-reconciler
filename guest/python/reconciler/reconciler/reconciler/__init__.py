@@ -11,23 +11,9 @@ import weakref
 from .types import Result, Ok, Err, Some
 
 
-def get(name: str) -> str:
-    raise NotImplementedError
-
 
 @dataclass
 class ReconcileResult:
-    """
-    import wasi:cli/stdout@0.2.0;
-    import wasi:random/random@0.2.0;
-    import wasi:cli/environment@0.2.0;
-    import wasi:cli/stderr@0.2.0;
-    import wasi:cli/stdin@0.2.0;
-    import wasi:clocks/monotonic-clock@0.2.0;
-    import wasi:clocks/wall-clock@0.2.0;
-    import wasi:filesystem/types@0.2.0;
-    import wasi:filesystem/preopens@0.2.0;
-    """
     requeue: bool
     requeue_after: int
     object: str

@@ -32,34 +32,6 @@ impl ::core::fmt::Display for ReconcileError {
     }
 }
 impl std::error::Error for ReconcileError {}
-#[allow(unused_unsafe, clippy::all)]
-pub fn get(name: &str) -> _rt::String {
-    unsafe {
-        #[repr(align(4))]
-        struct RetArea([::core::mem::MaybeUninit<u8>; 8]);
-        let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 8]);
-        let vec0 = name;
-        let ptr0 = vec0.as_ptr().cast::<u8>();
-        let len0 = vec0.len();
-        let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
-        #[cfg(target_arch = "wasm32")]
-        #[link(wasm_import_module = "$root")]
-        extern "C" {
-            #[link_name = "get"]
-            fn wit_import(_: *mut u8, _: usize, _: *mut u8);
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        fn wit_import(_: *mut u8, _: usize, _: *mut u8) {
-            unreachable!()
-        }
-        wit_import(ptr0.cast_mut(), len0, ptr1);
-        let l2 = *ptr1.add(0).cast::<*mut u8>();
-        let l3 = *ptr1.add(4).cast::<usize>();
-        let len4 = l3;
-        let bytes4 = _rt::Vec::from_raw_parts(l2.cast(), len4, len4);
-        _rt::string_lift(bytes4)
-    }
-}
 #[doc(hidden)]
 #[allow(non_snake_case)]
 pub unsafe fn _export_reconcile_cabi<T: Guest>(arg0: *mut u8, arg1: usize) -> *mut u8 {
@@ -139,6 +111,47 @@ pub(crate) use __export_world_reconciler_cabi;
 #[repr(align(4))]
 struct _RetArea([::core::mem::MaybeUninit<u8>; 20]);
 static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 20]);
+#[allow(dead_code)]
+pub mod example {
+    #[allow(dead_code)]
+    pub mod reconciler {
+        #[allow(dead_code, clippy::all)]
+        pub mod retrieve {
+            #[used]
+            #[doc(hidden)]
+            static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
+            use super::super::super::_rt;
+            #[allow(unused_unsafe, clippy::all)]
+            pub fn get(name: &str) -> _rt::String {
+                unsafe {
+                    #[repr(align(4))]
+                    struct RetArea([::core::mem::MaybeUninit<u8>; 8]);
+                    let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 8]);
+                    let vec0 = name;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "example:reconciler/retrieve@0.1.0")]
+                    extern "C" {
+                        #[link_name = "get"]
+                        fn wit_import(_: *mut u8, _: usize, _: *mut u8);
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    fn wit_import(_: *mut u8, _: usize, _: *mut u8) {
+                        unreachable!()
+                    }
+                    wit_import(ptr0.cast_mut(), len0, ptr1);
+                    let l2 = *ptr1.add(0).cast::<*mut u8>();
+                    let l3 = *ptr1.add(4).cast::<usize>();
+                    let len4 = l3;
+                    let bytes4 = _rt::Vec::from_raw_parts(l2.cast(), len4, len4);
+                    _rt::string_lift(bytes4)
+                }
+            }
+        }
+    }
+}
 #[allow(dead_code)]
 pub mod wasi {
     #[allow(dead_code)]
@@ -4123,8 +4136,8 @@ pub(crate) use __export_reconciler_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.35.0:example:reconciler@0.1.0:reconciler:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 5461] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xd4)\x01A\x02\x01A(\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 5502] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xfd)\x01A\x02\x01A(\x01\
 r\x03\x07requeue\x7f\x0drequeue-aftery\x06objects\x03\0\x10reconcile-result\x03\0\
 \0\x01r\x02\x04codey\x07messages\x03\0\x0freconcile-error\x03\0\x02\x01B\x04\x04\
 \0\x05error\x03\x01\x01h\0\x01@\x01\x04self\x01\0s\x04\0\x1d[method]error.to-deb\
@@ -4229,11 +4242,12 @@ ethod]directory-entry-stream.read-directory-entry\x01Q\x01h\x05\x01k\x1c\x01@\x0
 \x03err\xd2\0\0\xd3\0\x04\0\x15filesystem-error-code\x01T\x03\0\x1bwasi:filesyst\
 em/types@0.2.0\x05\x14\x02\x03\0\x0a\x0adescriptor\x01B\x07\x02\x03\x02\x01\x15\x04\
 \0\x0adescriptor\x03\0\0\x01i\x01\x01o\x02\x02s\x01p\x03\x01@\0\0\x04\x04\0\x0fg\
-et-directories\x01\x05\x03\0\x1ewasi:filesystem/preopens@0.2.0\x05\x16\x01@\x01\x04\
-names\0s\x03\0\x03get\x01\x17\x01j\x01\x01\x01\x03\x01@\x01\x06objects\0\x18\x04\
-\0\x09reconcile\x01\x19\x04\0#example:reconciler/reconciler@0.1.0\x04\0\x0b\x10\x01\
-\0\x0areconciler\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-componen\
-t\x070.220.0\x10wit-bindgen-rust\x060.35.0";
+et-directories\x01\x05\x03\0\x1ewasi:filesystem/preopens@0.2.0\x05\x16\x01B\x02\x01\
+@\x01\x04names\0s\x04\0\x03get\x01\0\x03\0!example:reconciler/retrieve@0.1.0\x05\
+\x17\x01j\x01\x01\x01\x03\x01@\x01\x06objects\0\x18\x04\0\x09reconcile\x01\x19\x04\
+\0#example:reconciler/reconciler@0.1.0\x04\0\x0b\x10\x01\0\x0areconciler\x03\0\0\
+\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.220.0\x10wit-bind\
+gen-rust\x060.35.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

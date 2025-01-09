@@ -2,13 +2,17 @@ from pydantic import ValidationError
 import json 
 import reconciler
 from topology_types import Topology
-from  user import User
+#from  user import User
+from reconciler.imports import retrieve
 
 class Reconciler(reconciler.Reconciler):
   def reconcile(self, object: str) -> reconciler.ReconcileResult:
     # Example values for the result
     requeue = False  # Whether to requeue
     requeue_after = 30  # Requeue after 30 seconds  
+
+    x = retrieve.get("wim")
+    print(x)
 
     try:
       # Parse the JSON string into a dictionary
